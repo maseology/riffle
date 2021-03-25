@@ -1,0 +1,68 @@
+
+
+The potential evaporation capacity per time step was estimated by integrating the Penman-Monteith (1965) equation over the 6-hour period:
+
+$$
+\lambda E_p=\frac{\Delta(R^*-G) + \rho_a c_p d_e / r_a}{\Delta+\gamma(1+r_c/r_a)}
+$$
+
+where $E_p$ is the mass desity flux [m/s]. $\rho_a$, $c_p$, $d_e$, $\Delta$ and $\gamma$ are all physical properties that correlate well with temperature, relative humidity and pressure.
+
+The input to the model is termed "Atmospheric Demand" which is the estimate of the potential mass flux given radiant energy surplus $R^*$ [W/m²], air temperature, atmospheric moisture deficits $d_e$ and wind speed $r_a=f(u)$. The maximum rates occur when all surfaces are assumed saturated ($r_c=0$), reducing the equation back to the Penman (1948) form. Energy exchange with the ground is deemed negligible relative to radiative exchange ($G=0$). Essentially, Atmospheric Demand relates to the amount of water the atmospehere can withdraw.
+
+
+
+$$
+\textit{Atmospheric Demand}=a u^b d_e 
+$$
+
+
+
+$$
+\textit{Atmospheric Demand}=\frac{\rho_a c_p d_e}{\lambda(\Delta+\gamma)} (a+bu) 
+$$
+
+$$
+\textit{Atmospheric Demand}=\frac{\Delta (R^*-G) + \rho_a c_p d_e \cdot f(u)}{\lambda(\Delta+\gamma)}
+$$
+
+#### Extra
+
+Rearranging wrt energy and advective terms:
+<!-- pg181 Novak -->
+<!-- similar to pg.39 surface climates of canada -->
+$$
+\textit{Atmospheric Demand}=\omega \left(\frac{R^*-G}{\lambda}\right) + (1-\omega)\rho_a \frac{\varepsilon}{p_a} d_e \cdot f(u)
+$$
+where,
+
+$$
+\omega = \frac{\Delta}{\Delta+\gamma}
+$$
+
+<!-- $$ r_a = \frac{1}{f(u)} = \frac{\left[\ln\frac{z-d_0}{z_0}\right]^2}{\kappa^2u_z} $$ -->
+<!-- $$  f(u_z) = r_a^{-1} = \frac{\kappa^2u_z}{\left[\ln\frac{z-d_0}{z_0}\right]^2}$$ -->
+<!-- $$ f(u) = r_a^{-1} = \kappa^2u\left[\ln\frac{z_u-d_0}{z_0}\right]^{-2} $$ -->
+
+$$ f(u)=a+bu $$ 
+$$
+\textit{Atmospheric Demand}=\omega \frac{R^*}{\lambda} + (1-\omega)\rho_a \frac{\varepsilon}{p_a} d_e (c_1+c_2u)
+$$
+$$
+R^*=K^*+L^*
+$$
+$$
+K^*=\alpha^\prime I^\prime_s \left(0.85-0.47n\right)
+$$
+$$
+\alpha^\prime \approx 1-\alpha
+$$
+$$
+n=c_3+c_4W
+$$
+$$
+n=\min\left(0,\max\left(1,1-\frac{W-c_4}{c_3-c_4}\right)\right)
+$$
+$$
+L^* = f(T)\cdot f(e_a)\cdot f(n)=\sigma T^4 \cdot (0.575e_a^{1/7}-1)\cdot\left(1-c_5n^2\right)
+$$

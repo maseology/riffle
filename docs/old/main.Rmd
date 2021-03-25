@@ -1,0 +1,344 @@
+---
+title: "**Regionally-distributed Runoff and Recharge model**"
+subtitle: "*development of the ORMGP water budget tool*"
+author: "M. Marchildon"
+date: '`r format(Sys.time(), "%B %d, %Y")`'
+header-includes:
+   - \usepackage{amsmath}
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    # toc_depth: 4
+    # css: style.css
+    # includes: style.tex
+---
+
+```{css, echo=FALSE}
+h1, .h1, h2, .h2, h3, .h3 {
+    margin-top: 84px;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<!-- https://holtzy.github.io/Pimp-my-rmd/ -->
+
+```{r, echo=FALSE}
+htmltools::img(src = knitr::include_graphics('./ORMGP_logo.png'), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; width:350px')
+```
+
+***
+
+## Itemized Summary
+
+- model run from the hydrological water year 2010 (2009-10-01) through water year 2020. 
+- Potential evaporation determined using the empirical wind functions of Penman (1948)
+- Rainfall was collected from capa
+- Snowmelt was collected from SNODAS
+- T, rh from MSC
+- 12.1M x 50x50 m cells x 6-hourly ts x 10 years
+
+## Executive Summary
+
+The model is physically based in that mass is conserved and it is not constrained to any particular timestep. Most parameters are common, percent impervious, conductivity of surficial soils, etc.
+
+## Introduction
+
+The following is a description of the water budget tool located on our website, hereinafter referred to as the "*model*".
+
+## Model Structure
+
+Runoff is conceptualized as being generated through the saturation excess (Dunne, 1975 CHECK) mechanism. Land area that has the capacity to retain water (through interception, soil retention, depression/rill storage, etc.) must be satisfied. The saturation excess mechanism is dependent on topography and it's interaction with the groundwater system; thus the model is distributed (cell-based) and has an integrated (albeit conceptual) groundwater system.
+
+Surface water-groundwater integration is viewed from the hydrologists' perspective: areas where is the groundwater system limiting infiltration (shallow groundwater table) and even contributing to overland runoff (springs/seepage areas). As a model output, this can be quantified as a net groundwater exchange field (groundwater recharge and discharge)
+
+
+
+dunnian processes.
+
+
+
+The purpose of the model is to have a 
+
+
+
+The purpose of the model is to account for the water balance  estimate the spatial and temporal distribution of water on the landscape.
+
+
+
+The basis of the model is that topography is paramount to the lateral movement of water yielding runoff. The model is deemed regional, in that it covers a large areal extent, yet is kept to a fine resolution to ensure that observed geomorphic flow patterns are represented in the model.
+
+
+### Time stepping
+
+The time step of the model has been set to 6 hour steps on 00:00\ UTC, yielding the local time steps of 01:00, 07:00, 13:00, and 19:00 EST. This step is chosen as it matches the received precipitation dataset described below.
+
+### Digital Elevation Model
+
+The Greater Toronto Area 2002 DEM (OMNRF, 2015) was re-sampled to the model's 50x50m grid cell resolution. Surface depressions were removed using Wang and Liu (2006) and flat regions were corrected using Martz (1997).
+
+Drainage directions and flowpaths of the now "hydrologically correct" DEM were were assigned based on the direction of steepest decent (D8).Cell gradients ($b$) and slope aspects were calculated based on a 9-cell planar interpolation routine. The unit contributing area $a=A/w$ topographic wetness index $ln\frac{a}{\tan b}$ (Beven and Kirkby, 1979--CHECK) were computed for every cell.
+
+### Sub-basins
+
+The 30,000 km² model area has been sub divided into 2,813 approximately 10 km² sub-basins. Within these sub-basins:
+1. Meteorological forcings from external sources are aggregated applied uniformly within the sub-basin (via a pre-processing routine); and
+1. Local shallow water response is assumed to act uniformly (the shallow subsurface catchment area).
+
+
+```{r fig.sws, echo=FALSE, fig.align = 'center', out.width = "75%", fig.cap = "2,813 10km² subwatersheds delineated within the ORMGP jurisdicton."}
+knitr::include_graphics(here::here("fig", "fig-sws1.png"))
+```
+
+<!-- <center> -->
+<!-- ![sws](fig/fig-sws1.png) -->
+<!-- </center> -->
+
+### Parameterization
+
+Although a distributed model, the procedures applied at the cell scale are quite parsimonious. There is no separate treatment of interception, depression storage, nor soil water retention, rather it is assumed that these processes respond to environmental factors (e.g., evaporation) in parallel and thus can be treated in bulk.
+
+From the top down perspective, viewing some 12.1 million 50x50m cells covering 30,000 km², it seems rather overcomplicated (possibly frivolous) to account water any more than to total mass present at any particular (lateral) location.
+
+#### Global parameters
+
+Cells with a contributing area ($A$) greater than 1 km² are deemed "stream cells" in which additional sources include groundwater discharge to streams.
+
+#### Sub-basin parameters
+
+Groundwater processes in the model are conceptualized at the sub-basin scale and so much of the groundwater parameterization is implimented here.
+
+#### Cell-based parameters
+
+Each cell is classified according to (i) surficial geology and (ii) land use mapping where each class is parameterized independently. "Look-up tables" are used to distribute model parameters accordin to their classification.
+
+##### Parameters:
+- impervious fraction
+- retention/storage capacity
+- depression storage
+- percolation rates
+
+
+
+### Inputs
+
+The model's structure is defined rather simply by at least 5 raster data sets. Given these data, the model's pre-processor will generate additional information based on these data:
+
+1. digital elevation model
+1. land use index (with parameter lookup table)
+1. surficial geology index (with parameter lookup table)
+1. 
+
+
+## Model Variables
+
+One goal set for the model design was to leverage contemporary gridded data sets available from a variety of open and public sources. Products known as "*data re-analysis products*" or "*data-assimilation products*" attempt to merge meteorological information from a variety of sources, whether they be ground (station) measurements, remote sensing observations (e.g., radar, satellite, etc.), and archived near-cast weather model outputs.  When combined, the gridded data resemble the spatial distribution of meteorological forcings unlike what can be accomplished through standard interpolation practices using point measurements (e.g., thiessen polygons, inverse distance weighting, etc.).
+
+An advantage to the data-assimilation products is that it removes the modeller from needing to model certain processes explicitly. Here, for example, the model does not account for a snowpack, rather inputs to the model include snowmelt derrived from SNODAS.
+
+The extent of the model combined with the resolution of the prosesses simulated lends itself best viewed from a top-down perspective (REF). This allows for model simplification by which many of the layered water stores (i.e., interception, deptression, soil, etc.) may be handled procedurally as one unit. Viewing the model domain in it's 30,000 km² extents,one can imagine how difficult it would be to discern any verticle detail.
+
+
+### Model Input Data Processing
+
+Meteorological data aquisiton, management, aggregation and interpolation was accomplished using [Delft-FEWS](https://www.deltares.nl/en/software/flood-forecasting-system-delft-fews-2/) (ver.2019.02 build.39845) a flood forecasting system offered (at no cost, only license agreement) by [Deltares](https://www.deltares.nl/en/). Configuration files for the Delft-FEWS system build can be found here: BLAH.
+
+Climate forcing data required by the model are atmospheric yield and potential evaporation on a 6-hourly timestep. Atmospheric yield is her defined as water added to land surface in its mobile (read: liquid) form.  Additional processing performed on the data exported from Delft-FEWS is described below.
+
+
+
+#### Data sets:
+
+Forcings data to the model processed by FEWS include:
+
+1. [CaPA-RDPA](https://weather.gc.ca/grib/grib2_RDPA_ps10km_e.html) 10/15km gridded precipitation fields, yielding 6-hourly precipiation totals, aquired from [CaSPAr](https://caspar-data.ca/);
+1. [SNODAS](https://nsidc.org/data/g02158) (NOHRSC, 2004) ~1km gridded 24-hour (UTC 06-06) snowmelt totals; and
+1. Meteorological Service of Canada (MSC) hourly mean temperature and pressure accessed [here](http://climate.weather.gc.ca/historical_data/search_historic_data_e.html).
+
+#### Transformations
+
+The time step of the model was set to the 6-hour time step offered with the CaPA-RDPA data. Hourly temperatures were 
+
+#### Time step (temporal scale)
+
+The time step of the model has been set to 6 hour steps. All other data sets have been either aggregated or disaggregated to match this temporal scale.
+
+The aquired data come in a variety of time steps...
+
+```{r fig.temp, echo=FALSE, fig.align = 'center', out.width = "75%", fig.cap = "discrepancy in data time resolution."}
+knitr::include_graphics(here::here("fig", "met_timeline.svg"))
+```
+
+
+#### Interpolation (spatial scale)
+
+Once transformed to the set time step, both scalar (i.e., point) data and gridded data are then interpolated to the 10 km² sub-watersheds. Given that each watershed contains 
+
+
+
+
+
+### Atmospheric Yield
+#### Precipitation and Snowmelt
+
+
+
+
+
+
+CaSPAr
+
+... 10 km resolution, compare that to the XX average spacing among operational meteorological stations.
+
+
+snodas ... can avoid the need to model snowmelt explicitly, and leverage online resources.
+
+<!-- The daily SNODAS time series was then disaggregated to the 6-hourly-UTC time stepping scheme described above using the Delft-FEWS transformation [Disaggregation: MeanToMean](https://publicwiki.deltares.nl/display/FEWSDOC/meanToMean). -->
+
+
+
+The precipitation and snowmelt time-series was then projected onto the model sub-watersheds using the transformation: [InverseDistance](https://publicwiki.deltares.nl/display/FEWSDOC/InterpolationSpatialInverseDistance).
+
+
+
+
+
+#### Atmospheric Yield
+
+
+The data collected include total precipitation and snowmelt. Summing the two together would double count precipitation fallen as snow; the model, however does not account for snow, rather it relies on snowmelt as a forcing. Precipition is parsed into rainfall and snowfall on the basis of a critical temperature ($T_\text{crit}$):
+
+$$
+\text{Rainfall}=
+\begin{cases}
+\text{Precipitation}, & T>T_\text{crit}\\
+0 & \text{otherwise},
+\end{cases}
+$$
+$$
+\text{Snowfall}=
+\begin{cases}
+\text{Precipitation}, & T\leq T_\text{crit}\\
+0 & \text{otherwise}.
+\end{cases}
+$$
+
+<!-- $$ -->
+<!-- \begin{split} -->
+
+<!-- \text{Rainfall} &= -->
+<!-- \begin{cases} -->
+<!-- \text{Precipitation}, & T>T_\text{crit}\\ -->
+<!-- 0 & \text{otherwise}, -->
+<!-- \end{cases} \\ -->
+
+<!-- \text{Snowfall} &= -->
+<!-- \begin{cases} -->
+<!-- \text{Precipitation}, & T\leq T_\text{crit}\\ -->
+<!-- 0 & \text{otherwise}. -->
+<!-- \end{cases} -->
+
+<!-- \end{split} -->
+<!-- $$ -->
+
+An optimization routine is employed to determine $T_\text{crit}$ such that annual average snowfall is equal to annual average snowmelt to ensure minimal deviation from total precipitation. Furthermore, snowmelt, which is aquired at a daily timestep that represents the *"total of 24 per hour melt rates, 06:00 UTC-06:00 UTC ... integrated for the previous 24 hours, giving daily totals"* (NOHRSC, 2004), is disaggregated to a 6-hourly time step based on the following rules:
+
+1. If any timesteps has temperatures greater than 10°C, snowmelt is equally divided amongst them;
+1. The first time step having 6-hour rainfall $\geq$ 5\ mm, all melt is assumed to occur during this event;
+1. If any timesteps within 06:00-06:00\ UTC has rainfall greater than 1\ mm, snowmelt is proportionned according to (and added with) rainfall;
+1. If any timesteps has temperatures greater than 0°C, snowmelt is equally divided amongst them; otherwise
+1. Snowmelt is equally divided among the 2 daytime time steps (12:00-00:00\ UTC---07:00-19:00\ EST).
+
+The final product, a single forcing termed "Atmospheric Yield" is inputted in the model.
+
+$$\text{Rainfall} + \text{Snowmelt} = \textit{Atmospheric Yield}$$
+
+The aim of the model design is to simulatneously reduce the amount of computational processes and leverage near-realtime data assimilation products. It is recognized from a hydrological model design perspective, that the dynamic processes that dictate the spatial distribution of watershed moisture is only affected by atmopheric yeild, that is water sourced from the atmosphere in liquid form.
+
+
+
+
+<!-- ### Temperature, Pressure, Humidity and Wind Speed -->
+### Atmospheric Demand $(E_a)$
+#### $T_a$, $P_a$, $\text{rh}$ and $u$
+
+Historical hourly measurements of air temperature, pressure, relative humidity and windspeed were retrieved from the ECCC website: https://climate.weather.gc.ca/historical_data/search_historic_data_e.html. In total, 46 stations with varying periods of record length and quality were collected. 
+
+The hourly time-series collected from each station was then aggregated to the 6-hourly-UTC time stepping scheme described above. Aggregation of all metrics was accomplished using the Delft-FEWS transformation ["Aggregation: MeanToMean"](https://publicwiki.deltares.nl/display/FEWSDOC/Aggregation+MeanToMean).
+
+The 6-hourly-UTC time-series was then projected onto the model sub-watersheds using the transformation ["InterpolationSpatial: InverseDistance"](https://publicwiki.deltares.nl/display/FEWSDOC/InterpolationSpatialInverseDistance).
+
+Model elevations range from 75-400 masl and orographic effects were deemed negligible beyond the spatial distribution meteorological stations.
+
+
+#### Atmospheric Demand
+
+
+The model considers the greater role the atmosphere has on its 30,000 km² extent. The atmosphere, taking a top-down perspective, requires consideration of PBL (Oke) as it reprensents the barrier from which mass must transfer when surface evaporation is captured by the atmosphere. This is particularily so when considering mass transfer over rough surfaces, where surface evaporation becomes coupled with advective (vapour deficit) flux through the PBL (surf clim can).
+
+This is evident when relating pan evaporation to strictly aerodynamic variables temperature and humidity, integrated at the 6-hourly timestep. For instance, using the advective term [kg/m²/s] of Penman (1948) is:
+
+$$
+E_a=\rho_a \frac{\varepsilon}{p_a} d_a \cdot f(u)
+$$
+
+where $d_a=(1-rh)e_s$, $e_s \propto T_a$ and the wind-function $f(u)=au^b$ [m/s] can safely reduced to an empirical form:
+
+$$
+E_a=7.46\times 10^{-9} \cdot au^b d_a
+$$
+where $E_a$ is now given in [m/s]. This is the power form of open water evaporation $(E_o)$ used by Penman (1948). It is worth noting that this is modified from Penman (1948) in that it is assumed $T_s \propto T_a$, that is the relationship between surface temperature and air temperature is captured in this empirical form.
+
+<!-- In addition to the above "Power" form, Penman (1948) also offers the the most common (linear) form: -->
+
+<!-- $$ -->
+<!-- E_a=a(1+bu) d_a -->
+<!-- $$ -->
+<!-- However, this did not perform as well as well as the power form. Either form is dependent on temperature and horizontal wind speed. -->
+
+For not it's simplicity, the power law does perform well against observation. 24,641 data-days from 17 MSC daily pan evaporation stations were gathered for validatation. With $u$ [m/s] and $d_a$ [Pa], $a=0.009$ and $b=0.26$ resulted in a global Kling-Gupta (2008) efficiency of 0.66 and 0.86 for daily and monthly pan evaporation estimation, respectively.
+
+```{r fig.EpCalibDaily, echo=FALSE, fig.align = 'center', out.width = "75%", fig.cap = "Simlutated daily evaporation (using the above equation) against observed pan evaporation."}
+knitr::include_graphics(here::here("fig", "4937_daily.svg"))
+```
+```{r fig.EpCalibMscatter, echo=FALSE, fig.align = 'center', out.width = "75%", fig.cap = "Monthly totals, scatter plot. Red line is the 1:1 line"}
+knitr::include_graphics(here::here("fig", "4937_mscatter.svg"))
+```
+```{r fig.EpCalibMtimeseries, echo=FALSE, fig.align = 'center', out.width = "75%", fig.cap = "Monthly totals, timeseries. (Note: shown here are consequtive months, only December-March are not included.)"}
+knitr::include_graphics(here::here("fig", "4937_mts.svg"))
+```
+
+
+
+## Glossary
+
+masl - metres above sea level
+
+ECCC - Environment Canada and Climate Change
+
+atmospheric yeild: term used to describe water (in liquid form) that is actively altering the hydrologic state at a particular location.
+
+
+## References
+
+Beven, K.J.; Kirkby, M. J. (1979). "A physically based, variable contributing area model of basin hydrology". Hydrological Science Bulletin. 24 (1): 43–69. doi:10.1080/02626667909491834
+
+Garbrecht Martz 1997 The assignment of drainage direction over flat surfaces in raster digital elevation models
+
+Gupta etal 2009 Decomposition of the mean squared error and NSE performance criteria- Implications for improving hydrological modelling
+
+Monteith, J.L., 1965. Evaporation and environment. Symposia of the Society for Experimental Biology 19: 205–224.
+
+National Operational Hydrologic Remote Sensing Center. 2004. Snow Data Assimilation System (SNODAS) Data Products at NSIDC, Version 1. [Indicate subset used]. Boulder, Colorado USA. NSIDC: National Snow and Ice Data Center. doi: https://doi.org/10.7265/N5TB14TC. [Date Accessed]
+
+Ontario Ministry of Natural Resources and Forestry, 2015. GTA DEM 2002 User Guide. Queen’s Printer for Ontario. 14pp.
+
+Penman, H.L., 1948. Natural evaporation from open water, bare soil and grass. Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences 193(1032): 120-145.
+
+Wang, L., H. Liu, 2006. An efficient method for identifying and filling surface depressions in digital elevation models for hydrologic analysis and modelling. International Journal of Geographical Information Science 20(2): 193-213.
+
